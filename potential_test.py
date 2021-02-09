@@ -6,6 +6,9 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib import colors
 
+import mpl_toolkits.mplot3d.art3d as art3d
+
+
 import math
 
 class PotentialField:
@@ -13,7 +16,7 @@ class PotentialField:
     def __init__(self, pos):
         self.pos = pos
 
-    def calc(self, x, y, gx, gy, max=100.0, min=-100.0):
+    def calc(self, x, y, gx, gy, max=5.0, min=-100.0):
         temp = []
 
         for p in self.pos:
@@ -31,7 +34,7 @@ class PotentialField:
         # return torch.sum(torch.cat(temp), dim=0)
         # return torch.clamp(torch.sum(torch.cat(temp), dim=0), max=max, min=min) + self.calc_AttractivePotential(x, y, [gx, gy], w=1.0, d_thr=0.5)
         # return torch.sum(torch.cat(temp), dim=0)
-        return torch.clamp(torch.sum(torch.cat(temp), dim=0), max=max, min=min) + self.calc_cost2(x, y, [gx, gy], w=1.0).unsqueeze(0)
+        return torch.clamp(torch.sum(torch.cat(temp), dim=0), max=max, min=min) #+ self.calc_cost2(x, y, [gx, gy], w=1.0).unsqueeze(0)
 
     def calc_cost(self, x, y, p, w=1.0):
         return w * torch.reciprocal(torch.norm(torch.tensor([(x - p[0])**2 , (y - p[1])**2])+1e-2, dim=0))
@@ -191,6 +194,13 @@ if __name__ == '__main__':
         # [ 0.6+0.15, -2.5],
         # [ 2.1+0.15, -2.5],
 
+        [-0.9+0.15,  0.5+0.15],
+        [ 0.6+0.15,  0.5+0.15],
+        [ 2.1+0.15,  0.5+0.15],
+        [-0.9+0.15, -2.5+0.15],
+        [ 0.6+0.15, -2.5+0.15],
+        [ 2.1+0.15, -2.5+0.15],
+
         [-0.9+0.15,  0.5+0.25],
         [ 0.6+0.15,  0.5+0.25],
         [ 2.1+0.15,  0.5+0.25],
@@ -240,6 +250,13 @@ if __name__ == '__main__':
         [ 0.6+0.15, -2.5+1.75],
         [ 2.1+0.15, -2.5+1.75],
 
+        [-0.9+0.15,  0.5+1.85],
+        [ 0.6+0.15,  0.5+1.85],
+        [ 2.1+0.15,  0.5+1.85],
+        [-0.9+0.15, -2.5+1.85],
+        [ 0.6+0.15, -2.5+1.85],
+        [ 2.1+0.15, -2.5+1.85],
+
         # [-0.9+0.15,  0.5+2.0],
         # [ 0.6+0.15,  0.5+2.0],
         # [ 2.1+0.15,  0.5+2.0],
@@ -248,8 +265,8 @@ if __name__ == '__main__':
         # [ 2.1+0.15, -2.5+2.0],
         ]
 
-    for i in np.arange(0.0, 7.0, 0.5):
-    # for i in np.arange(0.0, 7.0, 0.25):
+    # for i in np.arange(0.0, 7.0, 0.5):
+    for i in np.arange(0.0, 7.0, 0.25):
         obst_pos.append([-3.5+i, 3.5  ])
         obst_pos.append([ 3.5-i,-3.5  ])
         obst_pos.append([-3.5,  -3.5+i])
@@ -271,5 +288,62 @@ if __name__ == '__main__':
 
     my_cmap = plt.get_cmap('jet')
     ax.scatter3D(x.reshape(-1), y.reshape(-1), z.reshape(-1), marker=".", c = (z).reshape(-1), cmap = my_cmap)
+
+    for i in range(5, 6, 1):
+        line = art3d.Line3D(
+            [-3.5,  3.5, 3.5, -3.5, -3.5],
+            [-3.5, -3.5, 3.5,  3.5, -3.5],
+            [   i,    i,   i,    i,    i],
+            color='green'
+            )
+        ax.add_line(line)
+
+        line = art3d.Line3D(
+            [-0.9, -0.9+0.3, -0.9+0.3, -0.9,     -0.9],
+            [-0.5,     -0.5, -0.5-2.0, -0.5-2.0, -0.5],
+            [   i,    i,   i,    i,    i],
+            color='green'
+            )
+        ax.add_line(line)
+
+        line = art3d.Line3D(
+            [-0.9, -0.9+0.3, -0.9+0.3, -0.9,     -0.9],
+            [ 2.5,      2.5,  2.5-2.0,  2.5-2.0,  2.5],
+            [   i,    i,   i,    i,    i],
+            color='green'
+            )
+        ax.add_line(line)
+
+        line = art3d.Line3D(
+            [ 0.6,  0.6+0.3,  0.6+0.3,  0.6,      0.6],
+            [-0.5,     -0.5, -0.5-2.0, -0.5-2.0, -0.5],
+            [   i,    i,   i,    i,    i],
+            color='green'
+            )
+        ax.add_line(line)
+
+        line = art3d.Line3D(
+            [ 0.6,  0.6+0.3,  0.6+0.3,  0.6,      0.6],
+            [ 2.5,      2.5,  2.5-2.0,  2.5-2.0,  2.5],
+            [   i,    i,   i,    i,    i],
+            color='green'
+            )
+        ax.add_line(line)
+
+        line = art3d.Line3D(
+            [ 2.1,  2.1+0.3,  2.1+0.3,  2.1,      2.1],
+            [-0.5,     -0.5, -0.5-2.0, -0.5-2.0, -0.5],
+            [   i,    i,   i,    i,    i],
+            color='green'
+            )
+        ax.add_line(line)
+
+        line = art3d.Line3D(
+            [ 2.1,  2.1+0.3,  2.1+0.3,  2.1,      2.1],
+            [ 2.5,      2.5,  2.5-2.0,  2.5-2.0,  2.5],
+            [   i,    i,   i,    i,    i],
+            color='green'
+            )
+        ax.add_line(line)
 
     plt.show()

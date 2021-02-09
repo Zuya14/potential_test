@@ -115,7 +115,7 @@ dmypy.json
 .pyre/
 
 *.mp4
-*.png
+# *.png
 
 build/
 _*.c

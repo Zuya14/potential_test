@@ -16,7 +16,7 @@ class PotentialField:
     def __init__(self, pos):
         self.pos = pos
 
-    def calc(self, x, g, max=100.0, min=-100.0):
+    def calc(self, x, g, max=5.0, min=-100.0):
         temp = []
 
         for p in self.pos:
@@ -118,7 +118,7 @@ def test1():
     x = torch.zeros(2, requires_grad=True)
     x.requires_grad = True 
 
-    # optimizer = optim.SGD([x], lr=0.01)
+    # optimizer = optim.SGD([x], lr=0.1)
     # optimizer = optim.Adam([x], lr=0.1)
     # optimizer = optim.Adam([x], lr=0.1, betas=(0.9, 0.999))
     # optimizer = optim.Adam([x], lr=0.01, betas=(0.0, 0.0))
@@ -297,7 +297,8 @@ def test1():
         # [ 2.1+0.15, -2.5+2.0],
         ]
 
-    for i in np.arange(0.0, 7.0, 0.5):
+    # for i in np.arange(0.0, 7.0, 0.5):
+    for i in np.arange(0.0, 7.0, 0.25):
         obst_pos.append([-3.5+i, 3.5  ])
         obst_pos.append([ 3.5-i,-3.5  ])
         obst_pos.append([-3.5,  -3.5+i])
