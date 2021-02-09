@@ -13,7 +13,7 @@ class PotentialField:
     def __init__(self, pos):
         self.pos = pos
 
-    def calc(self, x, y, gx, gy, max=100, min=-100.0):
+    def calc(self, x, y, gx, gy, max=100.0, min=-100.0):
         temp = []
 
         for p in self.pos:
@@ -22,7 +22,8 @@ class PotentialField:
             temp.append(torch.clamp(self.calc_RepulsivePotential(x, y, p, w=1.0, d_thr=0.3).unsqueeze(0), max=max, min=min))
 
         # temp.append(self.calc_cost(x, y, [gx, gy], w=-1.0).unsqueeze(0))
-        temp.append(self.calc_AttractivePotential(x, y, [gx, gy], w=100.0, d_thr=0.5).unsqueeze(0))
+        temp.append(self.calc_cost2(x, y, [gx, gy], w=1.0).unsqueeze(0))
+        # temp.append(self.calc_AttractivePotential(x, y, [gx, gy], w=1.0, d_thr=0.1).unsqueeze(0))
 
         # print(torch.cat(temp, dim=0).size())
 
@@ -34,6 +35,9 @@ class PotentialField:
     def calc_cost(self, x, y, p, w=1.0):
         return w * torch.reciprocal(torch.norm(torch.tensor([(x - p[0])**2 , (y - p[1])**2])+1e-2, dim=0))
         # return w * torch.reciprocal(torch.norm(torch.tensor([(x - p[0])**2 , (y - p[1])**2])+5e-2, dim=0))
+
+    def calc_cost2(self, x, y, p, w=1.0):
+        return w * torch.norm(torch.tensor([(x - p[0])**2 , (y - p[1])**2]), dim=0)
 
     def calc_AttractivePotential(self, x, y, p, w=1.0, d_thr=1.0):
         dx2 = (x - p[0])**2

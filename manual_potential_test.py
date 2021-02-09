@@ -14,16 +14,17 @@ class PotentialField:
     def __init__(self, pos):
         self.pos = pos
 
-    def calc(self, x, g, max=100.0, min=-100):
+    def calc(self, x, g, max=100.0, min=-100.0):
         temp = []
 
         for p in self.pos:
             # temp.append(self.calc_cost(x, p, w=0.1).unsqueeze(0))
             # temp.append(self.calc_RepulsivePotential(x, p, w=2.0, d_thr=0.6).unsqueeze(0))
-            temp.append(torch.clamp(self.calc_RepulsivePotential(x, p, w=1.0, d_thr=0.3).unsqueeze(0), max=max, min=min))
+            temp.append(torch.clamp(self.calc_RepulsivePotential(x, p, w=0.05, d_thr=0.15).unsqueeze(0), max=max, min=min))
 
-        # # temp.append(self.calc_cost(x, g, w=-1.0).unsqueeze(0))
-        temp.append(self.calc_AttractivePotential(x, g, w=100.0, d_thr=0.5).unsqueeze(0))
+        # temp.append(self.calc_cost(x, g, w=-1.0).view(1).unsqueeze(0))
+        temp.append(self.calc_cost2(x, g, w=1.0).view(1).unsqueeze(0))
+        # temp.append(self.calc_AttractivePotential(x, g, w=1.0, d_thr=1.0).unsqueeze(0))
 
         # # return torch.clamp(torch.sum(torch.cat(temp), dim=0), max=max, min=min)
         # return torch.sum(torch.cat(temp), dim=0)
@@ -34,19 +35,36 @@ class PotentialField:
     def calc_cost(self, x, p, w=1.0):
         return w * torch.reciprocal(torch.norm((x[0] - p[0])**2 + (x[1] - p[1])**2) +1e-2)
 
+    def calc_cost2(self, x, p, w=1.0):
+        return w * torch.norm((x[0] - p[0])**2 + (x[1] - p[1])**2)
+
     def calc_AttractivePotential(self, x, p, w=1.0, d_thr=1.0):
         d = torch.norm((x[0] - p[0])**2 + (x[1] - p[1])**2).view(1)
-        if d.item() > d_thr:
-            return d_thr * w * d - w / 2.0 * d_thr**2
-        else:
-            return w / 2.0 * d**2
+
+        # if d.item() > d_thr:
+        #     return d_thr * w * d - w / 2.0 * d_thr**2
+        # else:
+        #     return w / 2.0 * d**2
+
+        return torch.where(
+            d > d_thr,
+            d_thr * w * d - w / 2.0 * d_thr**2,
+            w / 2.0 * d**2
+            ).view(1)
 
     def calc_RepulsivePotential(self, x, p, w=1.0, d_thr=1.0):
         d = torch.norm((x[0] - p[0])**2 + (x[1] - p[1])**2)
-        if d.item() < d_thr:
-            return torch.zeros(1)
-        else:
-            return torch.tensor(w / 2.0 * (1.0/d.item() + (1.0/d_thr))**2).view(1)
+
+        # if d.item() < d_thr:
+        #     return torch.zeros(1)
+        # else:
+        #     return torch.tensor(w / 2.0 * (1.0/d.item() + (1.0/d_thr))**2).view(1)
+
+        return torch.where(
+            d > d_thr,
+            d*0.0,
+            w / 2.0 * (1.0/d + (1.0/d_thr))**2
+            ).view(1)
 
 class Adam:
     def __init__(self, alpha=0.001, beta1=0.9, beta2=0.999, epsilon=1e-8):
@@ -92,10 +110,14 @@ class ManualPlot(EnvPlot):
 def test1():
     eta = 0.01
 
-    adam = Adam(alpha=0.01)
+    # adam = Adam(alpha=0.01)
 
     x = torch.zeros(2, requires_grad=True)
     x.requires_grad = True 
+
+    # optimizer = optim.SGD([x], lr=0.001)
+    optimizer = optim.Adam([x], lr=0.1, betas=(0.9, 0.999))
+    # optimizer = optim.Adam([x], lr=0.01, betas=(0.0, 0.0))
 
     obst_pos = [
         # [-0.9+0.15,  0.5+0.5],
@@ -202,21 +224,26 @@ def test1():
     potentialField = PotentialField(obst_pos)
 
     while True:
-        if manualPlot.click_flag:
-            adam.reset()
+        # if manualPlot.click_flag:
+        #     adam.reset()
+
+        optimizer.zero_grad()
 
         z = potentialField.calc(x, manualPlot.tgtPos)
         z.backward()
-        with torch.no_grad(): 
-            dx = torch.clamp(x.grad, -1.0, 1.0)
-            # dx = x.grad
-            # dx_hat = adam.update(dx)
+        # with torch.no_grad(): 
+        #     dx = torch.clamp(x.grad, -1.0, 1.0)
+        #     # dx = x.grad
+        #     # dx_hat = adam.update(dx)
 
-            x = x - eta * dx
-            # x = x - dx_hat
-            # print(dx_hat.detach().numpy())
-            print(dx.numpy())
-        x.requires_grad = True 
+        #     x = x - eta * dx
+        #     # x = x - dx_hat
+        #     # print(dx_hat.detach().numpy())
+        #     print(dx.numpy())
+        optimizer.step()
+        # x.requires_grad = True 
+
+        print(x.detach().numpy())
 
         manualPlot.clear()
         manualPlot.drawMap()
