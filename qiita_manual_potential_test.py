@@ -13,7 +13,7 @@ class PotentialField:
 
         attractive_force = self.calc_AttractivePotential(x, g)
 
-        return torch.clamp(attractive_force + repulsive_force, max=10)
+        return attractive_force + repulsive_force
 
     def calc_AttractivePotential(self, x, p, w=1.0, d_thr=1.0):
         d = torch.sqrt(torch.sum((x-p)**2, dim=-1) + 1e-6)
@@ -24,7 +24,7 @@ class PotentialField:
             w / 2.0 * d**2
             )
 
-    def calc_RepulsivePotential(self, x, p, w=0.1, d_thr=1.0):
+    def calc_RepulsivePotential(self, x, p, w=1.0, d_thr=1.0):
         d = torch.sqrt(torch.sum((x-p)**2, dim=-1) + 1e-6)
 
         return torch.where(
@@ -105,18 +105,22 @@ if __name__ == '__main__':
 
     x = torch.zeros(2, requires_grad=True)
 
-    optimizer = optim.SGD([x], lr=0.01, momentum=0.8)
+    lr = 0.01
+    momentum = 0.8
+
+    # optimizer = optim.SGD([x], lr=0.01, momentum=0.8)
+    optimizer = optim.SGD([x], lr, momentum)
 
     obst_pos = [
         [1.0, 0.0],
-        [1.0, 1.5],
+        [1.0, 2.0],
     ]
 
     manualPlot = ManualPlot(maxLen)
     potentialField = PotentialField(obst_pos)
 
     with torch.no_grad():
-        grid_force = potentialField.calc(grid, torch.tensor(manualPlot.tgtPos)).view(X.shape[0], -1).numpy()
+        grid_force = torch.clamp(potentialField.calc(grid, torch.tensor(manualPlot.tgtPos)), max=10).view(X.shape[0], -1).numpy()
 
     while True:
 
@@ -124,11 +128,12 @@ if __name__ == '__main__':
 
         force = potentialField.calc(x, torch.tensor(manualPlot.tgtPos))
         force.backward()
-
+        torch.nn.utils.clip_grad_norm_([x], 0.1/lr)
+        print(torch.norm(x.grad))
         optimizer.step()
 
         if manualPlot.getFlag():
-            grid_force = potentialField.calc(grid, torch.tensor(manualPlot.tgtPos)).view(X.shape[0], -1).numpy()
+            grid_force = torch.clamp(potentialField.calc(grid, torch.tensor(manualPlot.tgtPos)), max=10).view(X.shape[0], -1).numpy()
             manualPlot.offFlag()
 
         manualPlot.clear()
